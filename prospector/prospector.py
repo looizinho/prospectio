@@ -10,6 +10,7 @@ Uso:
   python prospector.py aprovar               # Revisão e aprovação no terminal
   python prospector.py enviar                # Disparo de e-mails
   python prospector.py enviar --dry-run      # Preview sem enviar
+  python prospector.py email_teste           # Envia e-mail de teste
   python prospector.py listar                # Lista leads aprovados
   python prospector.py pipeline              # Executa tudo em sequência
   python prospector.py status                # Painel de status geral
@@ -100,6 +101,16 @@ def cmd_enviar(dry_run=False):
     processar_fila_envio(dry_run=dry_run)
 
 
+def cmd_email_teste():
+    from core.email_sender import enviar_email_teste
+    console.print("[bold cyan]📧 Enviando e-mail de teste para luizzinho@gmail.com...[/bold cyan]")
+    sucesso = enviar_email_teste()
+    if sucesso:
+        console.print("[green]✓ E-mail de teste enviado com sucesso![/green]")
+    else:
+        console.print("[red]✗ Erro ao enviar e-mail de teste.[/red]")
+
+
 def cmd_listar():
     from core.aprovacao import listar_aprovados
     listar_aprovados()
@@ -136,6 +147,8 @@ def exibir_ajuda():
 
   [bold]enviar[/bold]               Dispara e-mails para leads aprovados
     --dry-run            Preview sem enviar
+
+  [bold]email_teste[/bold]          Envia e-mail de teste para luizzinho@gmail.com
 
   [bold]listar[/bold]               Lista leads aprovados
 
@@ -185,6 +198,9 @@ def main():
     elif cmd == "enviar":
         dry_run = "--dry-run" in args
         cmd_enviar(dry_run=dry_run)
+
+    elif cmd == "email_teste":
+        cmd_email_teste()
 
     elif cmd == "listar":
         cmd_listar()

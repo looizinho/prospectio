@@ -193,5 +193,47 @@ def processar_fila_envio(
     console.print(f"  [red]Erros: {erros}[/red]")
 
 
+def enviar_email_teste(destinatario: str = "luizzinho@gmail.com") -> bool:
+    """
+    Envia um e-mail de teste para validar configuração SMTP.
+    """
+    if not EMAIL_REMETENTE or not EMAIL_SENHA_APP:
+        console.print("[red]Credenciais de e-mail não configuradas no .env[/red]")
+        return False
+
+    assunto = "Email de Teste — Prospector"
+    corpo_texto = f"""Olá,
+
+Este é um e-mail de teste do Prospector.
+
+Se você recebeu esta mensagem, a configuração SMTP está funcionando corretamente.
+
+Data/Hora: {__import__('datetime').datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
+Remetente: {EMAIL_REMETENTE}
+
+---
+Prospector — Sistema de Prospecção
+Luiz Neto | AV & Tech Solutions"""
+
+    corpo_html = f"""<html>
+  <body style="font-family: Arial, sans-serif;">
+    <p>Olá,</p>
+    <p>Este é um <strong>e-mail de teste</strong> do Prospector.</p>
+    <p>Se você recebeu esta mensagem, a configuração SMTP está funcionando corretamente.</p>
+    <p style="margin-top: 20px; color: #666; font-size: 12px;">
+      Data/Hora: {__import__('datetime').datetime.now().strftime('%d/%m/%Y %H:%M:%S')}<br>
+      Remetente: {EMAIL_REMETENTE}
+    </p>
+    <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+    <p style="color: #999; font-size: 12px;">
+      Prospector — Sistema de Prospecção<br>
+      Luiz Neto | AV & Tech Solutions
+    </p>
+  </body>
+</html>"""
+
+    return enviar_email(destinatario, assunto, corpo_html, corpo_texto)
+
+
 if __name__ == "__main__":
     processar_fila_envio(dry_run=True)
