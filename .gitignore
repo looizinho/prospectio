@@ -6,4 +6,6 @@ prospector/.env
 prospector/venv/
 prospector/data/*.json
 prospector/logs/
+prospector/**/__pycache__/
+prospector/**/*.pyc
 
