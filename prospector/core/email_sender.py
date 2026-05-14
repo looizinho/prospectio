@@ -5,9 +5,13 @@ email_sender.py — Geração de e-mail personalizado por IA e disparo via SMTP
 import json
 import os
 import smtplib
+import platform
+import socket
+import psutil
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from pathlib import Path
+from datetime import datetime
 from anthropic import Anthropic
 from rich.console import Console
 from rich.panel import Panel
@@ -193,39 +197,169 @@ def processar_fila_envio(
     console.print(f"  [red]Erros: {erros}[/red]")
 
 
+def obter_info_dispositivo() -> dict:
+    """
+    Coleta informações do dispositivo que está enviando o e-mail.
+    """
+    try:
+        hostname = socket.gethostname()
+    except:
+        hostname = "Desconhecido"
+
+    try:
+        sistema = platform.system()
+        versao_so = platform.release()
+        plataforma = platform.platform()
+    except:
+        sistema = "Desconhecido"
+        versao_so = "Desconhecido"
+        plataforma = "Desconhecido"
+
+    try:
+        versao_python = platform.python_version()
+    except:
+        versao_python = "Desconhecido"
+
+    try:
+        cpu_count = psutil.cpu_count(logical=True)
+        cpu_percent = psutil.cpu_percent(interval=1)
+    except:
+        cpu_count = "Desconhecido"
+        cpu_percent = "Desconhecido"
+
+    try:
+        memoria = psutil.virtual_memory()
+        memoria_total = f"{memoria.total / (1024**3):.2f} GB"
+        memoria_disponivel = f"{memoria.available / (1024**3):.2f} GB"
+        memoria_uso = f"{memoria.percent}%"
+    except:
+        memoria_total = "Desconhecido"
+        memoria_disponivel = "Desconhecido"
+        memoria_uso = "Desconhecido"
+
+    return {
+        "hostname": hostname,
+        "sistema": sistema,
+        "versao_so": versao_so,
+        "plataforma": plataforma,
+        "python": versao_python,
+        "cpu_cores": cpu_count,
+        "cpu_uso": cpu_percent,
+        "memoria_total": memoria_total,
+        "memoria_disponivel": memoria_disponivel,
+        "memoria_uso": memoria_uso,
+    }
+
+
 def enviar_email_teste(destinatario: str = "luizzinho@gmail.com") -> bool:
     """
     Envia um e-mail de teste para validar configuração SMTP.
+    Inclui informações do dispositivo no corpo da mensagem.
     """
     if not EMAIL_REMETENTE or not EMAIL_SENHA_APP:
         console.print("[red]Credenciais de e-mail não configuradas no .env[/red]")
         return False
 
+    agora = datetime.now()
+    data_hora = agora.strftime('%d/%m/%Y %H:%M:%S')
+    info = obter_info_dispositivo()
+
     assunto = "Email de Teste — Prospector"
+
     corpo_texto = f"""Olá,
 
 Este é um e-mail de teste do Prospector.
 
 Se você recebeu esta mensagem, a configuração SMTP está funcionando corretamente.
 
-Data/Hora: {__import__('datetime').datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
+═══════════════════════════════════════════════════════════
+INFORMAÇÕES DO DISPOSITIVO
+═══════════════════════════════════════════════════════════
+
+Data/Hora: {data_hora}
 Remetente: {EMAIL_REMETENTE}
+
+Dispositivo:
+  Hostname: {info['hostname']}
+  Sistema Operacional: {info['sistema']} {info['versao_so']}
+  Plataforma: {info['plataforma']}
+
+Recursos:
+  Python: {info['python']}
+  CPUs: {info['cpu_cores']} cores (uso: {info['cpu_uso']}%)
+  Memória Total: {info['memoria_total']}
+  Memória Disponível: {info['memoria_disponivel']}
+  Memória em Uso: {info['memoria_uso']}
+
+═══════════════════════════════════════════════════════════
 
 ---
 Prospector — Sistema de Prospecção
 Luiz Neto | AV & Tech Solutions"""
 
     corpo_html = f"""<html>
-  <body style="font-family: Arial, sans-serif;">
+  <body style="font-family: Arial, sans-serif; line-height: 1.6;">
     <p>Olá,</p>
     <p>Este é um <strong>e-mail de teste</strong> do Prospector.</p>
     <p>Se você recebeu esta mensagem, a configuração SMTP está funcionando corretamente.</p>
-    <p style="margin-top: 20px; color: #666; font-size: 12px;">
-      Data/Hora: {__import__('datetime').datetime.now().strftime('%d/%m/%Y %H:%M:%S')}<br>
-      Remetente: {EMAIL_REMETENTE}
-    </p>
-    <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-    <p style="color: #999; font-size: 12px;">
+
+    <hr style="border: none; border-top: 2px solid #0099cc; margin: 30px 0;">
+
+    <h3 style="color: #0099cc; margin-top: 30px;">📊 Informações do Dispositivo</h3>
+
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+      <tr style="background-color: #f5f5f5;">
+        <td style="padding: 8px; font-weight: bold; width: 30%;">Data/Hora:</td>
+        <td style="padding: 8px;">{data_hora}</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; font-weight: bold;">Remetente:</td>
+        <td style="padding: 8px;">{EMAIL_REMETENTE}</td>
+      </tr>
+    </table>
+
+    <h4 style="color: #333; margin-top: 20px;">Dispositivo</h4>
+    <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+      <tr style="background-color: #f5f5f5;">
+        <td style="padding: 8px; font-weight: bold; width: 30%;">Hostname:</td>
+        <td style="padding: 8px;">{info['hostname']}</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; font-weight: bold;">Sistema Operacional:</td>
+        <td style="padding: 8px;">{info['sistema']} {info['versao_so']}</td>
+      </tr>
+      <tr style="background-color: #f5f5f5;">
+        <td style="padding: 8px; font-weight: bold;">Plataforma:</td>
+        <td style="padding: 8px;">{info['plataforma']}</td>
+      </tr>
+    </table>
+
+    <h4 style="color: #333; margin-top: 20px;">Recursos Disponíveis</h4>
+    <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+      <tr style="background-color: #f5f5f5;">
+        <td style="padding: 8px; font-weight: bold; width: 30%;">Python:</td>
+        <td style="padding: 8px;">{info['python']}</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; font-weight: bold;">CPUs:</td>
+        <td style="padding: 8px;">{info['cpu_cores']} cores (uso: {info['cpu_uso']}%)</td>
+      </tr>
+      <tr style="background-color: #f5f5f5;">
+        <td style="padding: 8px; font-weight: bold;">Memória Total:</td>
+        <td style="padding: 8px;">{info['memoria_total']}</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; font-weight: bold;">Memória Disponível:</td>
+        <td style="padding: 8px;">{info['memoria_disponivel']}</td>
+      </tr>
+      <tr style="background-color: #f5f5f5;">
+        <td style="padding: 8px; font-weight: bold;">Memória em Uso:</td>
+        <td style="padding: 8px;">{info['memoria_uso']}</td>
+      </tr>
+    </table>
+
+    <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+    <p style="color: #999; font-size: 12px; margin-top: 30px;">
       Prospector — Sistema de Prospecção<br>
       Luiz Neto | AV & Tech Solutions
     </p>
