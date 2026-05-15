@@ -21,6 +21,7 @@ import asyncio
 import sys
 import json
 import logging
+import random
 from pathlib import Path
 from datetime import datetime
 from rich.console import Console
@@ -131,8 +132,51 @@ def cmd_status():
 
 
 def cmd_coletar(query=None, max_results=10):
-    from core.scraper import executar_coleta
-    asyncio.run(executar_coleta(query=query, max_results=max_results))
+    from core.scraper import executar_coleta, QUERIES
+
+    # Determine query that will be used
+    q = query or random.choice(QUERIES)
+
+    # Read file state BEFORE execution
+    path = Path("data/leads_raw.json")
+    leads_antes = []
+    if path.exists():
+        with open(path, "r", encoding="utf-8") as f:
+            leads_antes = json.load(f)
+    count_antes = len(leads_antes)
+
+    # Execute scraping
+    leads = asyncio.run(executar_coleta(query=query, max_results=max_results))
+
+    # Read file state AFTER execution
+    leads_depois = []
+    if path.exists():
+        with open(path, "r", encoding="utf-8") as f:
+            leads_depois = json.load(f)
+    count_depois = len(leads_depois)
+
+    novos = count_depois - count_antes
+
+    # Send Telegram notification
+    timestamp_str = datetime.now().strftime("%H:%M:%S")
+    conteudo = (
+        f"🔍 *Coleta Concluída*\n"
+        f"• Query: \"{q}\"\n"
+        f"• Leads encontrados: {len(leads)}\n"
+        f"• Novos: {novos}\n"
+        f"• Total acumulado: {count_depois}\n"
+        f"_Atualizado em {timestamp_str}_"
+    )
+
+    try:
+        from core.telegram_bot import notificar_telegram
+        asyncio.run(notificar_telegram(
+            titulo="Coleta Concluída",
+            conteudo=conteudo,
+            emoji="🔍"
+        ))
+    except Exception as e:
+        logger.error(f"Erro ao enviar notificação Telegram: {e}")
 
 
 def cmd_triar():
