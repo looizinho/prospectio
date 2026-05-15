@@ -8,7 +8,7 @@ import asyncio
 import logging
 from datetime import datetime
 from dotenv import load_dotenv
-from telegram import Update
+from telegram import Update, Bot
 from telegram.ext import Application, CommandHandler, ContextTypes
 from rich.console import Console
 
@@ -62,6 +62,41 @@ async def handle_teste_email(update: Update, context: ContextTypes.DEFAULT_TYPE)
     except Exception as e:
         logger.error(f"[{timestamp}] ✗ Exceção ao enviar e-mail: {str(e)}")
         await update.message.reply_text("❌ Erro ao enviar. Verifique credenciais no .env")
+
+
+async def notificar_telegram(titulo: str, conteudo: str, emoji: str = "ℹ️") -> bool:
+    """Envia notificação formatada para o Telegram.
+
+    Retorna True se enviado com sucesso, False se houver erro.
+    Nunca lança exceção; erros são logados silenciosamente.
+    """
+    load_dotenv()
+
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    if not token:
+        logger.error(f"[{timestamp}] Erro: TELEGRAM_BOT_TOKEN não configurado")
+        return False
+
+    if not chat_id:
+        logger.error(f"[{timestamp}] Erro: TELEGRAM_CHAT_ID não configurado")
+        return False
+
+    try:
+        bot = Bot(token=token)
+        formatted_msg = f"{emoji} {titulo}\n{conteudo}"
+        await bot.send_message(
+            chat_id=chat_id,
+            text=formatted_msg,
+            parse_mode="Markdown"
+        )
+        logger.info(f"[{timestamp}] ✓ Notificação Telegram enviada")
+        return True
+    except Exception as e:
+        logger.error(f"[{timestamp}] Erro ao enviar notificação Telegram: {str(e)}")
+        return False
 
 
 async def start_bot_async() -> None:

@@ -20,13 +20,20 @@ Uso:
 import asyncio
 import sys
 import json
+import logging
 from pathlib import Path
+from datetime import datetime
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich import box
 
 console = Console()
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 
 def exibir_banner():
@@ -55,6 +62,18 @@ def cmd_status():
     table.add_column("Total", justify="center", style="cyan")
     table.add_column("Detalhes", style="dim")
 
+    status_data = {
+        "raw_total": 0,
+        "raw_pendentes": 0,
+        "triados_total": 0,
+        "triados_quentes": 0,
+        "triados_mornos": 0,
+        "aprovados_total": 0,
+        "aprovados_enviados": 0,
+        "aprovados_aguardando": 0,
+        "aprovados_sem_email": 0,
+    }
+
     for label, arquivo in arquivos.items():
         path = Path(arquivo)
         if path.exists():
@@ -67,19 +86,48 @@ def cmd_status():
                 aguardando = len([l for l in dados if l.get("email") and l.get("status_envio") != "enviado"])
                 sem_email = len([l for l in dados if not l.get("email")])
                 detalhes = f"Enviados: {enviados} | Aguardando: {aguardando} | Sem e-mail: {sem_email}"
+                status_data["aprovados_total"] = count
+                status_data["aprovados_enviados"] = enviados
+                status_data["aprovados_aguardando"] = aguardando
+                status_data["aprovados_sem_email"] = sem_email
             elif "triados" in arquivo:
                 quentes = len([l for l in dados if l.get("classificacao") == "QUENTE"])
                 mornos = len([l for l in dados if l.get("classificacao") == "MORNO"])
                 detalhes = f"🔥 {quentes} quentes | 🌡 {mornos} mornos"
+                status_data["triados_total"] = count
+                status_data["triados_quentes"] = quentes
+                status_data["triados_mornos"] = mornos
             else:
                 pendentes = len([l for l in dados if l.get("status") == "pendente"])
                 detalhes = f"Pendentes de triagem: {pendentes}"
+                status_data["raw_total"] = count
+                status_data["raw_pendentes"] = pendentes
 
             table.add_row(label, str(count), detalhes)
         else:
             table.add_row(label, "—", "[dim]arquivo não existe[/dim]")
 
     console.print(table)
+
+    # Enviar notificação via Telegram
+    timestamp_str = datetime.now().strftime("%H:%M:%S")
+    conteudo = (
+        f"📊 *Status do Pipeline*\n"
+        f"• Raw: {status_data['raw_total']} leads ({status_data['raw_pendentes']} pendentes)\n"
+        f"• Triados: {status_data['triados_total']} (🔥 {status_data['triados_quentes']} quentes, "
+        f"🌡 {status_data['triados_mornos']} mornos)\n"
+        f"• Aprovados: {status_data['aprovados_total']}\n"
+        f"• Enviados: {status_data['aprovados_enviados']} | "
+        f"Aguardando: {status_data['aprovados_aguardando']} | "
+        f"Sem e-mail: {status_data['aprovados_sem_email']}\n"
+        f"_Atualizado em {timestamp_str}_"
+    )
+
+    try:
+        from core.telegram_bot import notificar_telegram
+        asyncio.run(notificar_telegram(titulo="Status do Pipeline", conteudo=conteudo, emoji="📊"))
+    except Exception as e:
+        logger.error(f"Erro ao enviar notificação Telegram: {e}")
 
 
 def cmd_coletar(query=None, max_results=10):
