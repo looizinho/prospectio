@@ -89,12 +89,17 @@ async def start_bot_async() -> None:
     console.print(f"[dim]Chat ID autorizado: {chat_id}[/dim]")
     console.print("[dim]Pressione Ctrl+C para parar[/dim]\n")
 
-    # Iniciar bot e polling
-    async with application:
-        await application.updater.start_polling(allowed_updates=Update.ALL_TYPES)
-        try:
-            await asyncio.Event().wait()
-        except KeyboardInterrupt:
-            console.print("\n[yellow]⏸️  Bot Telegram parado[/yellow]")
-        finally:
-            await application.updater.stop()
+    # Inicializar, iniciar e começar polling
+    await application.initialize()
+    await application.start()
+    await application.updater.start_polling(allowed_updates=Update.ALL_TYPES)
+
+    try:
+        # Manter o bot rodando indefinidamente
+        await asyncio.Event().wait()
+    except KeyboardInterrupt:
+        console.print("\n[yellow]⏸️  Bot Telegram parado[/yellow]")
+    finally:
+        await application.updater.stop()
+        await application.stop()
+        await application.shutdown()
