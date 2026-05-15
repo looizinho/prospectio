@@ -11,6 +11,7 @@ Uso:
   python prospector.py enviar                # Disparo de e-mails
   python prospector.py enviar --dry-run      # Preview sem enviar
   python prospector.py email_teste           # Envia e-mail de teste
+  python prospector.py telegram              # Inicia bot Telegram
   python prospector.py listar                # Lista leads aprovados
   python prospector.py pipeline              # Executa tudo em sequência
   python prospector.py status                # Painel de status geral
@@ -116,6 +117,11 @@ def cmd_listar():
     listar_aprovados()
 
 
+def cmd_telegram():
+    from core.telegram_bot import start_bot_async
+    asyncio.run(start_bot_async())
+
+
 def cmd_pipeline(query=None):
     """Executa o pipeline completo: coletar → triar → aprovar → enviar."""
     console.print("[bold cyan]🚀 Executando pipeline completo...[/bold cyan]\n")
@@ -153,6 +159,8 @@ def exibir_ajuda():
   [bold]listar[/bold]               Lista leads aprovados
 
   [bold]pipeline[/bold]             Executa tudo em sequência
+
+  [bold]telegram[/bold]              Inicia bot Telegram (polling)
 
   [bold]status[/bold]               Painel de status geral
 
@@ -212,6 +220,9 @@ def main():
             if idx + 1 < len(args):
                 query = args[idx + 1]
         cmd_pipeline(query=query)
+
+    elif cmd == "telegram":
+        cmd_telegram()
 
     else:
         console.print(f"[red]Comando desconhecido: {cmd}[/red]")
