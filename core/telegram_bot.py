@@ -7,6 +7,7 @@ import os
 import asyncio
 import logging
 from datetime import datetime
+from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 from rich.console import Console
@@ -65,6 +66,8 @@ async def handle_teste_email(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def start_bot_async() -> None:
     """Inicia o bot Telegram com polling."""
+    load_dotenv()
+
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
