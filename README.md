@@ -1,4 +1,4 @@
-\# Prospector — Sistema de Prospecção Automatizada
+\# Prospectio — Sistema de Prospecção Automatizada
 **Luiz Neto | AV & Tech Solutions**
 
 ---
@@ -18,8 +18,8 @@
 
 ```bash
 cd ~/projetos
-# copie a pasta prospector aqui
-cd prospector
+# copie a pasta prospectio aqui
+cd prospectio
 ```
 
 ### 2. Crie e ative o ambiente virtual
@@ -103,7 +103,7 @@ Tempo estimado por ciclo: **15-20 minutos**
 ## Estrutura de Arquivos
 
 ```
-prospector/
+prospectio/
 ├── prospector.py          ← CLI principal (ponto de entrada)
 ├── requirements.txt
 ├── .env                   ← suas credenciais (NÃO commitar)
