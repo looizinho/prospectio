@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-prospector.py — CLI principal do sistema de prospecção
+prospector.py — CLI principal do Prospectio
 Luiz Neto | AV & Tech Solutions
 
 Uso:
@@ -39,7 +39,7 @@ def exibir_banner():
  ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝     ╚══════╝ ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝
     """
     console.print(f"[bold cyan]{banner}[/bold cyan]")
-    console.print("[dim]  Sistema de Prospecção — Luiz Neto | AV & Tech Solutions[/dim]\n")
+    console.print("[dim]  Prospectio — Sistema de Prospecção | Luiz Neto | AV & Tech Solutions[/dim]\n")
 
 
 def cmd_status():
@@ -165,7 +165,7 @@ def exibir_ajuda():
   [bold]status[/bold]               Painel de status geral
 
   [bold]ajuda[/bold]                Esta mensagem""",
-        title="Prospector — Ajuda",
+        title="Prospectio — Ajuda",
         border_style="cyan"
     ))
 

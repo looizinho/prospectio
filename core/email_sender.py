@@ -264,11 +264,11 @@ def enviar_email_teste(destinatario: str = "luizzinho@gmail.com") -> bool:
     data_hora = agora.strftime('%d/%m/%Y %H:%M:%S')
     info = obter_info_dispositivo()
 
-    assunto = "Email de Teste — Prospector"
+    assunto = "Email de Teste — Prospectio"
 
     corpo_texto = f"""Olá,
 
-Este é um e-mail de teste do Prospector.
+Este é um e-mail de teste do Prospectio.
 
 Se você recebeu esta mensagem, a configuração SMTP está funcionando corretamente.
 
@@ -294,13 +294,13 @@ Recursos:
 ═══════════════════════════════════════════════════════════
 
 ---
-Prospector — Sistema de Prospecção
+Prospectio — Sistema de Prospecção
 Luiz Neto | AV & Tech Solutions"""
 
     corpo_html = f"""<html>
   <body style="font-family: Arial, sans-serif; line-height: 1.6;">
     <p>Olá,</p>
-    <p>Este é um <strong>e-mail de teste</strong> do Prospector.</p>
+    <p>Este é um <strong>e-mail de teste</strong> do Prospectio.</p>
     <p>Se você recebeu esta mensagem, a configuração SMTP está funcionando corretamente.</p>
 
     <hr style="border: none; border-top: 2px solid #0099cc; margin: 30px 0;">
@@ -360,7 +360,7 @@ Luiz Neto | AV & Tech Solutions"""
 
     <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
     <p style="color: #999; font-size: 12px; margin-top: 30px;">
-      Prospector — Sistema de Prospecção<br>
+      Prospectio — Sistema de Prospecção<br>
       Luiz Neto | AV & Tech Solutions
     </p>
   </body>
