@@ -22,6 +22,7 @@ import sys
 import json
 import logging
 import random
+import shlex
 from pathlib import Path
 from datetime import datetime
 from rich.console import Console
@@ -35,6 +36,63 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+
+def parse_command(input_str: str) -> dict | None:
+    """
+    Parse interactive command input.
+
+    Examples:
+      /coletar → {"cmd": "coletar", "args": [], "flags": {}}
+      /coletar "empresa" → {"cmd": "coletar", "args": ["empresa"], "flags": {}}
+      /coletar "x" --max 20 → {"cmd": "coletar", "args": ["x"], "flags": {"max": "20"}}
+      /enviar --dry-run → {"cmd": "enviar", "args": [], "flags": {"dry_run": True}}
+    """
+    input_str = input_str.strip()
+
+    if not input_str or not input_str.startswith("/"):
+        return None
+
+    # Remove leading /
+    input_str = input_str[1:].strip()
+
+    if not input_str:
+        return None
+
+    try:
+        tokens = shlex.split(input_str)
+    except ValueError:
+        return None
+
+    if not tokens:
+        return None
+
+    cmd = tokens[0].lower()
+    rest = tokens[1:]
+
+    args = []
+    flags = {}
+    i = 0
+
+    while i < len(rest):
+        token = rest[i]
+
+        if token.startswith("--"):
+            flag_name = token[2:].replace("-", "_")
+
+            # Check if next token is a value (not a flag)
+            if i + 1 < len(rest) and not rest[i + 1].startswith("--"):
+                flag_value = rest[i + 1]
+                flags[flag_name] = flag_value
+                i += 2
+            else:
+                flags[flag_name] = True
+                i += 1
+        else:
+            args.append(token)
+            i += 1
+
+    return {"cmd": cmd, "args": args, "flags": flags}
 
 
 def exibir_banner():
@@ -235,36 +293,137 @@ def exibir_ajuda():
     console.print(Panel(
         """[bold cyan]Comandos disponíveis:[/bold cyan]
 
-  [bold]coletar[/bold]              Busca novos leads no Google Maps
+  [bold]/coletar[/bold]              Busca novos leads no Google Maps
     --query "..."        Busca com query específica
     --max N              Máximo de resultados (padrão: 10)
 
-  [bold]triar[/bold]                Avalia leads pendentes com IA
+  [bold]/triar[/bold]                Avalia leads pendentes com IA
 
-  [bold]aprovar[/bold]              Revisão interativa no terminal
+  [bold]/aprovar[/bold]              Revisão interativa no terminal
 
-  [bold]enviar[/bold]               Dispara e-mails para leads aprovados
+  [bold]/enviar[/bold]               Dispara e-mails para leads aprovados
     --dry-run            Preview sem enviar
 
-  [bold]email_teste[/bold]          Envia e-mail de teste para luizzinho@gmail.com
+  [bold]/email_teste[/bold]          Envia e-mail de teste para luizzinho@gmail.com
 
-  [bold]listar[/bold]               Lista leads aprovados
+  [bold]/listar[/bold]               Lista leads aprovados
 
-  [bold]pipeline[/bold]             Executa tudo em sequência
+  [bold]/pipeline[/bold]             Executa tudo em sequência
+    --query "..."        Query específica para coleta
 
-  [bold]telegram[/bold]              Inicia bot Telegram (polling)
+  [bold]/telegram[/bold]             Inicia bot Telegram (polling)
 
-  [bold]status[/bold]               Painel de status geral
+  [bold]/status[/bold]               Painel de status geral
 
-  [bold]ajuda[/bold]                Esta mensagem""",
+  [bold]/ajuda[/bold]                Esta mensagem
+
+  [bold]/sair[/bold]                 Sair do programa""",
         title="Prospectio — Ajuda",
         border_style="cyan"
     ))
 
 
-def main():
+def execute_command(parsed: dict) -> bool:
+    """
+    Execute a parsed command.
+    Returns True on success, False on error.
+    """
+    cmd = parsed.get("cmd", "").lower()
+    args = parsed.get("args", [])
+    flags = parsed.get("flags", {})
+
+    try:
+        if cmd == "sair":
+            console.print("[dim]Até logo! 👋[/dim]")
+            return False  # Signal to exit loop
+
+        elif cmd == "status":
+            cmd_status()
+
+        elif cmd == "coletar":
+            query = args[0] if args else flags.get("query")
+            max_results = 10
+            if "max" in flags:
+                try:
+                    max_results = int(flags["max"])
+                except (ValueError, TypeError):
+                    console.print("[red]Erro: --max deve ser um número[/red]")
+                    return True
+            cmd_coletar(query=query, max_results=max_results)
+
+        elif cmd == "triar":
+            cmd_triar()
+
+        elif cmd == "aprovar":
+            cmd_aprovar()
+
+        elif cmd == "enviar":
+            dry_run = "dry_run" in flags
+            cmd_enviar(dry_run=dry_run)
+
+        elif cmd == "email_teste":
+            cmd_email_teste()
+
+        elif cmd == "listar":
+            cmd_listar()
+
+        elif cmd == "pipeline":
+            query = args[0] if args else flags.get("query")
+            cmd_pipeline(query=query)
+
+        elif cmd == "telegram":
+            cmd_telegram()
+
+        elif cmd == "ajuda":
+            exibir_ajuda()
+
+        else:
+            console.print(f"[red]Comando desconhecido: /{cmd}[/red]")
+            console.print("[dim]Digite /ajuda para ver lista de comandos[/dim]")
+
+        return True
+
+    except KeyboardInterrupt:
+        console.print("\n[dim]Interrompido pelo usuário[/dim]")
+        return True
+    except Exception as e:
+        console.print(f"[red]Erro ao executar comando: {e}[/red]")
+        logger.exception(f"Erro em execute_command({cmd})")
+        return True
+
+
+def main_interactive():
+    """Interactive TUI loop."""
     exibir_banner()
 
+    while True:
+        try:
+            user_input = input("prospector> ").strip()
+
+            if not user_input:
+                continue
+
+            parsed = parse_command(user_input)
+
+            if parsed is None:
+                console.print("[red]Erro: comando deve começar com /[/red]")
+                console.print("[dim]Digite /ajuda para ver comandos disponíveis[/dim]")
+                continue
+
+            should_continue = execute_command(parsed)
+            if not should_continue:
+                break
+
+        except KeyboardInterrupt:
+            console.print("\n[dim]Até logo! 👋[/dim]")
+            break
+        except EOFError:
+            console.print("[dim]Até logo! 👋[/dim]")
+            break
+
+
+def main_single_command():
+    """Execute single command from sys.argv (legacy mode)."""
     args = sys.argv[1:]
 
     if not args or args[0] in ("ajuda", "help", "-h", "--help"):
@@ -322,4 +481,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # If no args, start interactive mode; otherwise execute single command
+    if len(sys.argv) == 1:
+        main_interactive()
+    else:
+        main_single_command()
