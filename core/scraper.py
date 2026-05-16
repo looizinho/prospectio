@@ -15,16 +15,13 @@ console = Console()
 
 
 QUERIES = [
-    "empresa organizadora de eventos",
-    "produtora de eventos corporativos",
-    "locadora de equipamentos audiovisuais",
-    "empresa de eventos empresariais",
-    "produção de eventos São Paulo",
+    "empresa organizadora de eventos Rio de Janeiro",
+    "produtora de eventos corporativos Rio de Janeiro",
+    "locadora de equipamentos audiovisuais Rio de Janeiro",
+    "empresa de eventos empresariais Rio de Janeiro",
     "produção de eventos Rio de Janeiro",
-    "produção de eventos Belo Horizonte",
-    "produção de eventos Brasília",
-    "produção de eventos Curitiba",
-    "produção de eventos Porto Alegre",
+    "organizador de eventos RJ",
+    "agência de eventos Rio de Janeiro",
 ]
 
 
