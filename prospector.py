@@ -237,6 +237,12 @@ def cmd_coletar(query=None, max_results=10):
         logger.error(f"Erro ao enviar notificação Telegram: {e}")
 
 
+def cmd_coletar_intent():
+    """Coleta leads por intenção de busca (Google Trends + SERP)."""
+    from core.scraper_google_intent import fluxo_coleta_por_intent
+    fluxo_coleta_por_intent()
+
+
 def cmd_triar():
     from core.triagem import triar_leads_pendentes
     triar_leads_pendentes()
@@ -297,6 +303,9 @@ def exibir_ajuda():
     --query "..."        Busca com query específica
     --max N              Máximo de resultados (padrão: 10)
 
+  [bold]/coletar_intent[/bold]       Coleta por intenção (Google Trends + SERP)
+                         Interface TUI interativa
+
   [bold]/triar[/bold]                Avalia leads pendentes com IA
 
   [bold]/aprovar[/bold]              Revisão interativa no terminal
@@ -350,6 +359,9 @@ def execute_command(parsed: dict) -> bool:
                     console.print("[red]Erro: --max deve ser um número[/red]")
                     return True
             cmd_coletar(query=query, max_results=max_results)
+
+        elif cmd == "coletar_intent":
+            cmd_coletar_intent()
 
         elif cmd == "triar":
             cmd_triar()
@@ -447,6 +459,9 @@ def main_single_command():
             if idx + 1 < len(args):
                 max_results = int(args[idx + 1])
         cmd_coletar(query=query, max_results=max_results)
+
+    elif cmd == "coletar_intent":
+        cmd_coletar_intent()
 
     elif cmd == "triar":
         cmd_triar()
