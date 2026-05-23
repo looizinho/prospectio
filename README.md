@@ -79,6 +79,41 @@ python prospector.py
 
 No prompt interativo, use comandos com `/` (ex.: `/status`, `/coletar`, `/pipeline`).
 
+## Implementacao do TUI (commit `717905c`, merge `8c0bebe`)
+
+O `prospector.py` foi transformado para operar em dois modos:
+
+- `main_interactive()` quando executado sem argumentos (`python prospector.py`)
+- `main_single_command()` para manter compatibilidade com comandos via `sys.argv`
+
+Detalhes da implementacao:
+
+- `parse_command(input_str)`:
+  - Exige prefixo `/` no comando
+  - Usa `shlex.split` para suportar aspas em argumentos
+  - Interpreta flags no formato `--flag` e `--flag valor`
+  - Converte `--dry-run` para `dry_run=True`
+
+- `execute_command(parsed)`:
+  - Faz o dispatch para `cmd_status`, `cmd_coletar`, `cmd_triar`, `cmd_aprovar`, `cmd_enviar`, `cmd_pipeline`, etc.
+  - Implementa comando `/sair` para encerrar o loop
+  - Exibe erro amigavel para comando desconhecido e orienta uso de `/ajuda`
+
+- Loop TUI:
+  - Prompt fixo `prospector> `
+  - Trata `KeyboardInterrupt` e `EOFError` para encerramento limpo
+  - Mantem o banner e painel de ajuda com comandos no formato `/comando`
+
+Exemplos no TUI:
+
+```text
+/coletar "agencia de marketing" --max 20
+/enviar --dry-run
+/pipeline --query "produtora de eventos"
+/ajuda
+/sair
+```
+
 ### Comandos diretos
 
 ```bash
