@@ -1,142 +1,142 @@
-\# Prospectio — Sistema de Prospecção Automatizada
+# Prospectio — Sistema de Prospeccao Automatizada
 **Luiz Neto | AV & Tech Solutions**
+
+## Python com Mise (inicio rapido)
+
+Este projeto fixa o Python em `3.12.13` via `mise.toml`.
+
+```bash
+# 1) Instale o mise (se ainda nao tiver)
+curl https://mise.run | sh
+
+# 2) Entre na pasta do projeto
+cd /Users/luizinho/Development/prospectio
+
+# 3) Instale/ative a versao de Python declarada
+mise install
+mise trust
+
+# 4) Confirme a versao ativa
+mise exec -- python --version
+```
+
+Dica: para executar comandos com a versao do `mise`, prefira `mise exec -- <comando>`.
 
 ---
 
 ## Requisitos
 
-- Python 3.11+
-- pip
+- Python 3.12.13 (via `mise`)
+- `pip`
+- Playwright + Chromium
 - Conta Google (Gmail com App Password)
-- Chave da API Anthropic (gratuita com limites)
+- Chave da API Anthropic
 
 ---
 
-## Instalação
+## Instalacao
 
-### 1. Clone ou copie o projeto para sua máquina
-
-```bash
-cd ~/projetos
-# copie a pasta prospectio aqui
-cd prospectio
-```
-
-### 2. Crie e ative o ambiente virtual
+### 1. Crie e ative o ambiente virtual
 
 ```bash
-python3 -m venv venv
+mise exec -- python -m venv venv
 source venv/bin/activate        # Linux/Mac
-# venv\\Scripts\\activate         # Windows
+# venv\\Scripts\\activate      # Windows
 ```
 
-### 3. Instale as dependências
+### 2. Instale as dependencias
 
 ```bash
 pip install -r requirements.txt
 playwright install chromium
 ```
 
-### 4. Configure as variáveis de ambiente
+### 3. Configure as variaveis de ambiente
 
 ```bash
 cp .env.example .env
-nano .env   # ou use seu editor preferido
 ```
 
-Preencha:
-- `ANTHROPIC_API_KEY` — https://console.anthropic.com
-- `EMAIL_REMETENTE` — seu Gmail
-- `EMAIL_SENHA_APP` — App Password do Google (não é sua senha normal!)
+Preencha no `.env`:
+- `ANTHROPIC_API_KEY`
+- `EMAIL_REMETENTE`
+- `EMAIL_SENHA_APP`
+- `EMAIL_NOME_REMETENTE`
 
-#### Como gerar App Password no Google:
-1. Acesse: https://myaccount.google.com/security
-2. Ative verificação em 2 etapas (obrigatório)
-3. Pesquise \"App Passwords\" ou acesse: https://myaccount.google.com/apppasswords
-4. Crie um app password para \"Mail\"
-5. Copie a senha de 16 dígitos gerada
+Opcionais (Telegram):
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
 
 ---
 
 ## Uso
 
-### Comandos principais
+### Modo interativo (recomendado)
 
 ```bash
-# Ver status geral do pipeline
+python prospector.py
+```
+
+No prompt interativo, use comandos com `/` (ex.: `/status`, `/coletar`, `/pipeline`).
+
+### Comandos diretos
+
+```bash
 python prospector.py status
-
-# Pipeline completo (recomendado para uso diário)
-python prospector.py pipeline
-
-# Ou etapa por etapa:
 python prospector.py coletar
+python prospector.py coletar --query "produtora de eventos"
+python prospector.py coletar --query "agencia de marketing" --max 20
 python prospector.py triar
 python prospector.py aprovar
 python prospector.py enviar
-
-# Preview de e-mails sem enviar
 python prospector.py enviar --dry-run
-
-# Busca com query específica
-python prospector.py coletar --query \"produtora de eventos corporativos São Paulo\"
-
-# Lista todos os leads aprovados
+python prospector.py email_teste
 python prospector.py listar
+python prospector.py pipeline
+python prospector.py telegram
 ```
 
 ---
 
-## Fluxo de Trabalho Diário
+## Fluxo de trabalho
 
-```
-1. python prospector.py coletar     → Busca ~10 novos leads
-2. python prospector.py triar       → IA avalia e classifica
-3. python prospector.py aprovar     → Você revisa e aprova
-4. python prospector.py enviar      → Dispara e-mails personalizados
+```text
+coletar -> triar -> aprovar -> enviar
 ```
 
-Tempo estimado por ciclo: **15-20 minutos**
+Atalho para executar em sequencia:
+
+```bash
+python prospector.py pipeline
+```
 
 ---
 
-## Estrutura de Arquivos
+## Estrutura de arquivos
 
-```
+```text
 prospectio/
-├── prospector.py          ← CLI principal (ponto de entrada)
-├── requirements.txt
-├── .env                   ← suas credenciais (NÃO commitar)
-├── .env.example
-├── core/
-│   ├── scraper.py         ← Coleta do Google Maps
-│   ├── triagem.py         ← Avaliação por IA
-│   ├── aprovacao.py       ← Interface de aprovação no terminal
-│   └── email_sender.py    ← Geração e envio de e-mails
-├── data/
-│   ├── leads_raw.json     ← Leads coletados (brutos)
-│   ├── leads_triados.json ← Leads avaliados pela IA
-│   └── leads_aprovados.json ← Leads aprovados por você
-└── logs/
+|-- prospector.py
+|-- requirements.txt
+|-- mise.toml
+|-- .env.example
+|-- core/
+|   |-- scraper.py
+|   |-- triagem.py
+|   |-- aprovacao.py
+|   |-- email_sender.py
+|   `-- telegram_bot.py
+`-- data/
+    |-- leads_raw.json
+    |-- leads_triados.json
+    `-- leads_aprovados.json
 ```
 
 ---
 
-## Limitações e Cuidados
+## Observacoes importantes
 
-- **Google Maps scraping**: O Google pode bloquear requisições excessivas. Use com moderação (10/dia é seguro).
-- **Anthropic API gratuita**: Tem limite de tokens/min. O sistema já respeita isso.
-- **Gmail**: Limite de 500 e-mails/dia com conta comum.
-- **LGPD**: Ao contatar empresas B2B por e-mail com proposta comercial legítima, você está dentro do permitido. Mantenha opt-out claro no e-mail.
-
----
-
-## Próximas Funcionalidades (Roadmap)
-
-- [ ] Bot Telegram para aprovação pelo celular
-- [ ] Scraping do LinkedIn
-- [ ] Scraping do Instagram por hashtags
-- [ ] Integração com WhatsApp (quando a API oficial ficar acessível)
-- [ ] Dashboard de métricas (taxa de resposta, conversão)
-- [ ] Agendamento automático (cron job diário)
-
+- Triagem com IA roda de forma sequencial para reduzir risco de rate limit.
+- Scraping no Google Maps deve ser usado com moderacao.
+- Para Gmail, use App Password (nao a senha normal da conta).
+- O comando `status` e o fluxo de `coletar` podem enviar notificacoes no Telegram quando configurado.
