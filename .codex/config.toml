@@ -1,0 +1,6 @@
+[mcp_servers.rootshell]
+args = [
+    "localhost",
+    "49846",
+]
+command = "nc"
