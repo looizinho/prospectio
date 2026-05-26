@@ -7,3 +7,4 @@ colorama==0.4.6
 rich==13.7.1
 psutil==7.2.2
 python-telegram-bot>=20.0
+pytrends==4.7.3
