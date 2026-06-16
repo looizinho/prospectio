@@ -1,4 +1,6 @@
 # Prospectio — Sistema de Prospeccao Automatizada
+
+#python #mise #playwright #anthropic #ai
 **Luiz Neto | AV & Tech Solutions**
 
 ## Python com Mise (inicio rapido)
